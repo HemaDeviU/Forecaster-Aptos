@@ -1,5 +1,4 @@
 
-import Link from 'next/link';
 import { Home, Search, Bell, User } from 'lucide-react';
 
 const BottomMenu = () => {

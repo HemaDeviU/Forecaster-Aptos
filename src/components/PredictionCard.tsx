@@ -5,7 +5,7 @@ import { Input } from './ui/input'
 import { ArrowUp } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 
-const PredictionCard = ({ timer, secondTimer, isTimerActive, isSecondTimerActive })  => {
+const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
   // Manage state for user choice and form progression
   const [step, setStep] = useState(1); // Initial step (choose UP/DOWN)
   const [prediction, setPrediction] = useState(null); // Track whether UP or DOWN is selected

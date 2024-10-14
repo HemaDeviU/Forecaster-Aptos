@@ -2,8 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Basement Expanded';
+  src: url('/fonts/BasementGrotesque-BlackExpanded.ttf') format('truetype'); /* Correct path */
+  font-weight: 900; /* or 900, depending on how you want to define it */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Basement Expanded';
+  src: url('/fonts/BasementGrotesque-BoldExpanded.ttf') format('truetype'); /* Correct path */
+  font-weight: 700; /* or 900, depending on how you want to define it */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Basement';
+  src: url('/fonts/BasementGrotesque-Bold.ttf') format('truetype'); /* Correct path */
+  font-weight: 700; /* or 900, depending on how you want to define it */
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Roundo';
+  src: url('/fonts/Roundo-SemiBold.otf') format('opentype'); /* Correct path */
+  font-weight: 700; /* or 900, depending on how you want to define it */
+  font-style: normal;
+}
+
+
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Basement Expanded", Helvetica, sans-serif;
   background-color: #000;
   display: flex;
   justify-content: center;
@@ -86,21 +115,44 @@ body {
 .mobile-container {
   width: 390px;
   height: 844px;
-  background-color: #05112B;
+  background-color: #17074E;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  outline: solid 3px #404040;
+  outline-offset: 16px;
+  border-radius: 30px;
 }
 
+.bg-menu {
+  background-color: #3610B2;
+}
 .bg-lighter {
-  background-color: #001277;
+  background-color: #4722BF;
+}
+.bg-more-lighter {
+  background-color: #524BDE;
 }
 .bg-button {
-  background-color: #9369FF;
+  background-color: #FF3EF2;
 }
 .bg-accent {
-  background-color: #2A4AFF;
+  background-color: #FF3EF2;
 }
 .border-accent {
-  border: #2A4AFF solid;
+  border: #6D6FEB solid 4px;
+}
+
+.pool-img {
+  width: 180px;
+  height: auto;
+}
+.aptos-img {width: 26px; height: auto;}
+.prediction-step, .bet-step {border-radius: 30px;}
+
+.pred-button-title {font-size: 18px;}
+.currency-button {border: solid 1px rgba(255, 255, 255, 0.6);}
+.payout { font-family: "Roundo";}
+.connect-button-hover:hover {
+  background-color: #A527E9;
 }

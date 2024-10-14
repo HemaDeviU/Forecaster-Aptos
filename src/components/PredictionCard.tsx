@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Input } from '/Users/stepome/Documents/Code/Aptos-Code-Collision/Aptos-frontend/src/components/ui/input'
+import { Input } from './ui/input'
 import { ArrowUp } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 

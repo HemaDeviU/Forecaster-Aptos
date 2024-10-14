@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { Input } from './ui/input'
 import { ArrowUp } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
+import Confetti from 'react-confetti';
 
-const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
+
+const PredictionCard = ({ timer, secondTimer, isSecondTimerActive, resetTimers })  => {
   // Manage state for user choice and form progression
   const [step, setStep] = useState(1); // Initial step (choose UP/DOWN)
   const [prediction, setPrediction] = useState(null); // Track whether UP or DOWN is selected
@@ -18,6 +20,10 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
 
   // Handle the button click for UP/DOWN prediction
   const handlePrediction = (choice) => {
+    // Disable predictions if the timer is over or secondTimer is active
+    if (timer === 0 || isSecondTimerActive) {
+        return; // Do nothing if timer is over or secondTimer has started
+      }
     setPrediction(choice); // Set user choice to UP or DOWN
     setStep(2); // Move to the next step (bet amount + connect wallet)
   };
@@ -65,6 +71,17 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
     return 'Enter DOWN';
   };
 
+  const resetPrediction = () => {
+    setStep(1);
+    setPrediction(null);
+    setBetAmount('');
+    setIsPredictionConfirmed(false);
+    setHasWon(null);
+    resetTimers();
+  };
+
+
+
   return (
     <div className="card h-[565px]">
       {/* Step 1: Render the card content based on the current step */}
@@ -80,7 +97,7 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
                     <p className='bg-lighter text-white px-4 py-2 rounded-xl'>UP won</p>
                     )}
             </div>
-            <div className='card-content flex flex-col px-4 pt-4 pb-8 gap-4 relative justify-between'>
+            <div className='card-content h-[506px] flex flex-col px-4 pt-4 pb-8 gap-4 relative justify-between'>
                   
 
                 {/* Conditional rendering of content based on timer state */}
@@ -159,17 +176,32 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
                 
 
 
-                {secondTimer === 0 && isPredictionConfirmed && (
-                    <div className='absolute top-0 left-0 w-full h-full bg-lighter flex items-center justify-center'>
-                        <p>
-                        {hasWon === null 
-                            ? "Waiting for result..." 
-                            : hasWon 
-                            ? "You have won!" 
-                            : "You have lost."}
-                        </p>
-                        <p>8.3 APT</p>
+               {secondTimer === 0 && isPredictionConfirmed && (
+                <div className='absolute top-0 left-0 w-full h-full bg-lighter flex items-center justify-center'>
+                    {hasWon === null ? (
+                    <div className='waiting-result'>
+                        <p>Waiting for result...</p>
                     </div>
+                    ) : hasWon ? (
+                    <div className='win-structure flex flex-col justify-between w-full p-4 pb-6 items-center h-full'>
+                        <Confetti width={window.innerWidth} height={window.innerHeight} />
+                        <div className='flex flex-col justify-center w-full p-4 items-center gap-6 h-full'>
+                            <h1 className='text-3xl'>Congrats!</h1>
+                            <div className='flex flex-col gap-2 items-center justify-center'>
+                                <p>You have won:</p>
+                                <div className='flex items-center gap-2'> <img src="images/aptos logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
+                            </div>
+                        </div>
+                        <button onClick={resetPrediction} className='connect-button-hover bg-button text-white px-4 py-2 rounded w-full rounded-xl'>Back</button>
+
+                    </div>
+                    ) : (
+                    <div className='lose-structure flex flex-col justify-center items-center gap-6'>
+                        <h1 className='text-3xl'>You have lost.</h1>
+                        <p>Better luck next time!</p>
+                    </div>
+                    )}
+                </div>
                 )}
 
             </div>
@@ -189,7 +221,7 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive })  => {
                 </div>
                 <button className='bg-lighter text-white px-4 py-2 rounded-xl'>{prediction}</button>
             </div>
-            <div className='card-content h-[495px] flex flex-col px-4 pt-4 pb-6 gap-6 justify-between'>
+            <div className='card-content h-[506px] flex flex-col px-4 pt-4 pb-6 gap-6 justify-between'>
                 <div>
                     {/* Content for when the timer is running */}
                         <div className='central-info border-accent bg-more-lighter rounded-2xl gap-4 p-4 flex flex-col justify-center items-center'>

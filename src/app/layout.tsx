@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
 import BottomMenu from '@/components/bottom-menu';
 import Navbar from '@/components/navbar';
+
 
 
 export const metadata: Metadata = {

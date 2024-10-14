@@ -56,7 +56,7 @@ const Home = () => {
     <div className="font-[family-name:var(--font-geist-sans)] w-full">
       <main className="flex flex-col gap-4">
         <div className="flex justify-between items-center">
-          <Button className="currency-button font-black text-lg text-white px-4 py-2 rounded-full">APTUSD</Button>
+          <Button className="currency-button font-black text-lg text-white px-4 py-2 rounded-full">BTCUSD</Button>
           <div className="timer-display text-white bg-lighter px-4 py-2 rounded-full w-[100px]">
           {isSecondTimerActive ? (
               <p>{`00:${String(secondTimer).padStart(2, '0')}`}</p>

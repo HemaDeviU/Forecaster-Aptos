@@ -102,15 +102,15 @@ const PredictionCard = ({ timer, secondTimer, isTimerActive, isSecondTimerActive
                             <div className='mt-4'>
                                 <p>Last Price</p>
                                 <div className='flex justify-between items-center'>
-                                    <p className='text-[24px] font-bold'>$10,13</p>
-                                    <div className='flex bg-[#05DB62] rounded-xl p-2'><ArrowUp size={24} color="#fff" /> {/* Customize size and color */}<p>$0,06</p></div>
+                                    <p className='text-[24px] font-bold'>$64,685</p>
+                                    <div className='flex bg-[#05DB62] rounded-xl p-2'><ArrowUp size={24} color="#fff" /> {/* Customize size and color */}<p>$172</p></div>
                                 </div>
                             </div>
                             <div className='bg-[#6D6FEB] w-full h-[2px]'/>
                             <div className='mb-4'>
                                 <div className='card-header flex justify-between mb-2'>
                                     <p>Locked Price</p>
-                                    <p className='font-black text-md' >$10,07 APT</p>
+                                    <p className='font-black text-md' >$64,513</p>
                                 </div> 
                                 <div className='card-header flex justify-between'>
                                     <p>Prize Pool</p>
@@ -196,7 +196,7 @@ const PredictionCard = ({ timer, secondTimer, isTimerActive, isSecondTimerActive
                            <img src="images/3d treasure.png" alt="3d treasure prize pool" className='pool-img' />
                             <div className='card-header flex w-full justify-between items-center'>
                                 <p>Prize Pool</p>
-                                <p className='font-black text-md'>42.3 APT</p>
+                                <p className='font-black text-md'>8.3 APT</p>
                             </div>  
                         </div>  
                 </div>

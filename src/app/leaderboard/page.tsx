@@ -74,7 +74,7 @@ const Leaderboard = () => {
               </td>
               <td className="py-2 w-full max-w-[130px]">{account.name}</td>
               <td className="px-4 py-2 flex justify-left items-center gap-2">
-                <img src="images/Aptos Logo.png" alt="aptos logo" width="40px" />
+                <img src="images/aptos_logo.png" alt="aptos logo" width="40px" />
                 {account.points}
               </td>
             </tr>

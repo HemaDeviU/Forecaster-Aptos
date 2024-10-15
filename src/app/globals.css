@@ -122,6 +122,7 @@ body {
   outline: solid 3px #404040;
   outline-offset: 16px;
   border-radius: 30px;
+  overflow: hidden;
 }
 
 .bg-menu {
@@ -155,4 +156,27 @@ body {
 .payout { font-family: "Roundo";}
 .connect-button-hover:hover {
   background-color: #A527E9;
+}
+
+/* .custom-shape {
+  clip-path: polygon(0 20%, 0% 100%, 100% 100%, 100% 20%, 78% 20%, 68% 0%, 32% 0%, 22% 20%);
+  border-radius: 20%;
+} */
+ 
+.menu-icon-box {
+  font-family: "Roundo";
+}
+
+.see-on-tw {
+  text-decoration: underline;
+  font-size: 16px;
+  color: #3841eb;
+  font-family: "Roundo";
+}
+
+.hourglass {
+  height: 50px;
+  width: auto;
+  position: absolute;
+  right: 15px;
 }

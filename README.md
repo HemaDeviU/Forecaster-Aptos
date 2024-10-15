@@ -1,37 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Forecaster
+The Mobile-First Prediction market to bet on BTC prices every 5 minutes, built on Aptos ✨
 
-First, run the development server:
+Track : **The Unexpected**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Bounty: **The UI Challenge**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Deployed on : [Aptos Testnet](https://explorer.aptoslabs.com/account/0x2a12be72eb760dc3bd69017173f7245567ce8b8dada77d5c4eefddbe22fe13a5/transactions?network=testnet)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Description
+**Forecaster** is a decentralized prediction market built on the Aptos blockchain that allows users to bet on Bitcoin price movements. The platform operates by resolving bets every five minutes, providing a dynamic and engaging experience for users interested in cryptocurrency price speculation. Utilizing Aptos' advanced features, Forecaster ensures secure, efficient transactions and real-time updates through integration with the Pyth network for accurate price feeds.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Why  users will love Forecaster on Aptos
+  - Mobile First
+  - Gamified 3d UI
+  - Super fast settlements
+  - Decentralized Prediction Market
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+### Aptos Blockchain Utilization
+Forecaster is designed in a way such that there is always something to bet on. The near instant settlement offered by Aptos is perfect for this since the users expect it so that they can reuse their winning funds on the next bet. This was a primary reason to choose Aptos to build on, along with a strong community.
+- **High Throughput**: The platform can handle higher number of transactions per second, ensuring that multiple users can place bets without congestion.
+- **Instant Settlement**:Instant settlement to encourage users to bet over long time.
+- **Smart Contract Functionality**: Utilizing Move, Aptos' programming language, Forecaster implements secure and efficient smart contracts that govern all betting activities.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### The Tech 
+- **The Code**: The frontend is developed using Next.js and the design was developed on Figma.The smart contracts are written in Move, focusing on security and efficiency. Comprehensive error handling and assertions are in place to prevent misuse.
+- **Complexity of Technology**: Forecaster utilizes advanced features such as user bet tracking, dynamic round management, and automated reward distribution.
+- **Integration with Pyth Network**: Real-time price feeds from Pyth ensure that users have access to the most accurate Bitcoin prices, gain the reliability of the prediction market.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Innovation
+- **Real-time Betting**: Users can place bets based on real-time data, allowing for a more interactive experience compared to traditional betting platforms. They can also pull up the charts for a price action study to make calculated decisions. 
+- **Frequent Resolution Intervals**: The five-minute resolution period keeps users engaged and encourages frequent participation.
 
-## Deploy on Vercel
+### Project Completeness 
+- **User Interface**: An intuitive interface that allows users to easily navigate and place bets.
+- **Functionality**: Fully implemented features including bet placement, round resolution, and reward claims.
+- **Testing on Aptos Testnet**: The project has been tested and deployed on the Aptos testnet.
+  
+### Future Potential
+- **Scalability**: The architecture is designed to accommodate an increasing number of users and transactions as demand grows.The future plans to implement referral based NFTs that unlock super powers to increase the user base is out go-to-market strategy.
+- **Community Engagement**: Plans for community-driven features such as governance tokens or rewards for active participants can enhance user loyalty and platform adoption.
+- **Expansion Opportunities**: Plans to launch the dapp natively multi-lingual to boost user participation.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### The Team
+- **Stefano**: Design & Front end Developer
+- **Hema**: Smart Contract Developer
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Forecaster-Aptos # Creates a README.md file with the title
+## Long Term Plan
+
+Fantasy gaming based prediction market was our initial idea. We came to know about the hack just 4 days before, so we managed to pull an idea to code of the betting market on btc pricing.Had we known about the hack earlier,we would have chosen our elaborate idea.
+Focusing on long term on Forecaster , we plan to lottery and price prediction based on other crypto prices by introducing gamified experience where usage unlocks NFTs with super-powers like increased multiplier to the winnings when the user bets.
+
+
+
+
+
+
+
+
+

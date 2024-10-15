@@ -90,7 +90,7 @@ module BitcoinPredictionMarket {
 
     public fun start_new_round(operator: &signer) acquires PredictionMarket {
         let operator_addr = signer::address_of(operator);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(operator_addr == market.operator, ERROR_NOT_OPERATOR);
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
@@ -122,7 +122,7 @@ module BitcoinPredictionMarket {
 
     public fun resolve_round(operator: &signer) acquires PredictionMarket {
         let operator_addr = signer::address_of(operator);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(operator_addr == market.operator, ERROR_NOT_OPERATOR);
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
@@ -169,7 +169,7 @@ module BitcoinPredictionMarket {
 
     fun bet_internal(user: &signer, amount: Coin<AptosCoin>, is_bull: bool) acquires PredictionMarket, UserBets {
         let user_addr = signer::address_of(user);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
         let current_round = vector::borrow_mut(&mut market.rounds, market.current_epoch - 1);
@@ -198,12 +198,12 @@ module BitcoinPredictionMarket {
         });
 
         // Transfer the bet amount to the contract
-        coin::deposit(@admin, amount);
+        coin::deposit(signer::address_of(admin), amount);
     }
 
     public fun claim(user: &signer, epoch: u64) acquires PredictionMarket, UserBets {
         let user_addr = signer::address_of(user);
-        let market = borrow_global<PredictionMarket>(@admin);
+        let market = borrow_global<PredictionMarket>(signer::address_of(admin));
         
         assert!(epoch < market.current_epoch, ERROR_ROUND_NOT_ENDED);
         let round = vector::borrow(&market.rounds, epoch - 1);
@@ -233,7 +233,7 @@ module BitcoinPredictionMarket {
 
     public fun claim_treasury(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
 
@@ -246,7 +246,7 @@ module BitcoinPredictionMarket {
 
     public fun pause(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
         market.paused = true;
@@ -254,7 +254,7 @@ module BitcoinPredictionMarket {
 
     public fun unpause(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
         market.paused = false;
@@ -262,7 +262,7 @@ module BitcoinPredictionMarket {
 
     public fun set_treasury_fee(admin: &signer, fee: u64) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
         assert!(fee <= MAX_TREASURY_FEE, ERROR_INVALID_EPOCH);
@@ -271,7 +271,7 @@ module BitcoinPredictionMarket {
 
     public fun set_operator(admin: &signer, new_operator: address) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
         
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
         market.operator = new_operator;
@@ -307,7 +307,8 @@ module BitcoinPredictionMarket {
         
         // Adjust price to USD with 2 decimal places (cents)
         // Pyth gives price in 8 decimal places, so we divide by 1_000_000 to get to cents
-        (price_value / 1_000_000) as u64
+       u64::from(price_value / 1_000_000)
+
     }
 
     public fun transfer_admin_role(admin: &signer, new_admin: address) acquires PredictionMarket {

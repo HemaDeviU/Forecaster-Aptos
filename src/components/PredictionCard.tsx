@@ -199,7 +199,7 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
                             <h1 className='text-3xl text-center'>Congrats!</h1>
                             <div className='flex flex-col gap-2 items-center justify-center'>
                                 <p>You have won:</p>
-                                <div className='flex items-center gap-2'> <img src="images/aptos logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
+                                <div className='flex items-center gap-2'> <img src="images/aptos_logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
                             </div>
                         </div>
                         <button onClick={resetPrediction} className='connect-button-hover bg-button text-white px-4 py-2 rounded w-full rounded-xl'>Back</button>
@@ -251,7 +251,7 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
                             <label>
                                 Commit:
                             </label> 
-                            <div className='flex items-center gap-2'> <img src="images/aptos logo.png" alt="aptos logo" className='aptos-img' /> <p>APT</p></div>
+                            <div className='flex items-center gap-2'> <img src="images/aptos_logo.png" alt="aptos logo" className='aptos-img' /> <p>APT</p></div>
                         </div>
                         <Input
                             type="number"

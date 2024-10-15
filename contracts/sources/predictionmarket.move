@@ -5,10 +5,25 @@ module forecaster::bitcoin_prediction_market {
     use aptos_framework::timestamp;
     use std::vector;
     use std::option::{Self, Option};
+    use pyth::pyth::{update_price_feeds, get_update_fee, get_price};
+    use pyth::i64::{I64, get_magnitude_if_positive};
 
     use pyth::pyth;
-    use pyth::price::Price;
+    use pyth::price::{Price, get_price as get_price_as_int};
     use pyth::price_identifier;
+
+    const ERROR_ALREADY_INITIALIZED: u64 = 1001;
+    const ERROR_INVALID_TREASURY_FEE: u64 = 1002;
+    const ERROR_NOT_OPERATOR: u64 = 1003;
+    const ERROR_NOT_INITIALIZED: u64 = 1004;
+    const ERROR_ROUND_NOT_ENDED: u64 = 1005;
+    const ERROR_ROUND_ENDED: u64 = 1006;
+    const ERROR_ROUND_NOT_BETTABLE: u64 = 1007;
+    const ERROR_NOT_CLAIMABLE: u64 = 1008;
+    const ERROR_ALREADY_CLAIMED: u64 = 1009;
+    const ERROR_NOT_ADMIN: u64 = 1010;
+    const ERROR_INVALID_EPOCH: u64 = 1011;
+
 
     const ROUND_DURATION: u64 = 300; // 5 minutes in seconds
     const MAX_TREASURY_FEE: u64 = 1000; // 10%
@@ -50,7 +65,7 @@ module forecaster::bitcoin_prediction_market {
         bets: vector<UserBet>,
     }
 
-    public fun initialize(admin: &signer, operator: address, oracle: address, treasury_fee: u64) {
+    public fun initialize(admin: &signer, operator: address, oracle: address, treasury_fee: u64) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
         assert!(!exists<PredictionMarket>(admin_addr), ERROR_ALREADY_INITIALIZED);
         assert!(treasury_fee <= MAX_TREASURY_FEE, ERROR_INVALID_EPOCH);
@@ -90,7 +105,7 @@ module forecaster::bitcoin_prediction_market {
        let current_price = get_bitcoin_price(operator, price_update_vector); 
 
        // Extract the price value from the Price type returned by get_bitcoin_price
-       let start_price_value = extract_price_value(current_price); // You need to implement this function
+       let start_price_value = get_magnitude_if_positive(&extract_price_value(current_price)); // You need to implement this function
 
        let new_round = Round {
             epoch: new_epoch,
@@ -131,9 +146,9 @@ module forecaster::bitcoin_prediction_market {
        let end_price = get_bitcoin_price(operator ,price_update_vector); 
 
        // Extract the price value from the Price type returned by get_bitcoin_price
-       let end_price_value = extract_price_value(end_price); // You need to implement this function
+       let end_price_value = get_magnitude_if_positive(&extract_price_value(end_price)); // You need to implement this function
 
-       current_round.end_price = end_price_value; 
+       current_round.end_price = end_price_value;
        current_round.resolved = true;
 
        // Calculate rewards
@@ -166,7 +181,7 @@ module forecaster::bitcoin_prediction_market {
       bet_internal(user , coin :: withdraw<AptosCoin>(user ,amount) , false)
    }
 
-   fun bet_internal(user:&signer , amount:Coi<AptosCoin> , is_bull :bool) acquires PredictionMarket , UserBets {
+   fun bet_internal(user:&signer , amount:Coin<AptosCoin> , is_bull :bool) acquires PredictionMarket , UserBets {
       let user_addr=signer :: address_of(user);
       let market=borrow_global_mut<PredictionMarket>(@forecaster);
       
@@ -230,24 +245,27 @@ module forecaster::bitcoin_prediction_market {
      }; 
    }
 
-   fun find_user_bet(bets:&mut vector<UserBet> ,epoch:u64):Option<UserBet>{
-         let length=vector :: length(bets);
-         let mut i = 0; 
+   fun find_user_bet(bets: &mut vector<UserBet>, epoch: u64): Option<UserBet> {
+        let length = vector::length(bets);
+        let mut_bet: Option<UserBet> = option::none();
 
-         while(i < length){
-             let bet=vector :: borrow(bets,i); 
-             if(bet.epoch == epoch){
-                 return option :: some(*bet); 
-             };
-             i +=1; 
-         };
-         option :: none()
-   }
+        let i = 0;
+        while (i < length) {
+            let bet = vector::borrow(bets, i);
+            if (bet.epoch == epoch) {
+                // Return a copy of bet
+                return option::some(*bet);
+            };
+            i = i + 1;
+        };
+        option::none()
+    }
+
 
    public fun get_bitcoin_price(user:&signer,payments :vector<vector<u8>>):Price{
          // First update the Pyth price feeds
-         let coins=coin :: withdraw(user ,pyth :: get_update_fee(&payments)); 
-         pyth :: update_price_feeds(payments ,coins);
+         let coins=coin :: withdraw(user ,get_update_fee(&payments));
+         update_price_feeds(payments ,coins);
 
          // Read the current price from a price feed.
          // Each price feed (e.g., BTC/USD) is identified by a price feed ID.
@@ -255,7 +273,7 @@ module forecaster::bitcoin_prediction_market {
          // Note : Aptos uses the Pyth price feed ID without the `0x` prefix.
          let btc_price_identifier=x"e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"; 
          let btc_usd_price_id=price_identifier :: from_byte_vec(btc_price_identifier); 
-         pyth :: get_price(btc_usd_price_id)
+         get_price(btc_usd_price_id)
    }
 
    fun is_round_bettable(round:&Round):bool{
@@ -269,6 +287,10 @@ module forecaster::bitcoin_prediction_market {
          assert!(admin_addr==market.admin ,ERROR_NOT_ADMIN); 
          market.paused=true; 
    }
+
+   public fun extract_price_value(price: Price): I64 {
+       get_price_as_int(&price)
+    }
 
    public fun unpause_market(admin:&signer) acquires PredictionMarket{
          let admin_addr=signer :: address_of(admin); 

@@ -1,15 +1,14 @@
-module BitcoinPredictionMarket {
+module forecaster::bitcoin_prediction_market {
     use std::signer;
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::timestamp;
-    use aptos_framework::account;
     use std::vector;
     use std::option::{Self, Option};
 
+     use pyth::pyth;
+    use pyth::price::Price;
     use pyth::price_identifier;
-    use pyth::price_feed;
-    use pyth::i64;
 
     /// Errors
     const ROUND_DURATION: u64 = 300; // 5 minutes in seconds
@@ -28,7 +27,7 @@ module BitcoinPredictionMarket {
 
     /// Constants
     const MAX_TREASURY_FEE: u64 = 1000; // 10%
-    const PYTH_BTC_PRICE_FEED_ID: vector<u8> = x"0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+    const PYTH_BTC_PRICE_FEED_ID: vector<u8> = x"e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
 
     struct PredictionMarket has key {
         admin: address,
@@ -42,7 +41,7 @@ module BitcoinPredictionMarket {
         last_round_time: u64,
     }
 
-    struct Round has store {
+    struct Round has store, drop {
         epoch: u64,
         start_timestamp: u64,
         end_timestamp: u64,
@@ -56,7 +55,7 @@ module BitcoinPredictionMarket {
         resolved: bool,
     }
 
-    struct UserBet has store, drop {
+    struct UserBet has store, drop, copy {
         epoch: u64,
         position: bool, // true for Bull, false for Bear
         amount: u64,
@@ -90,7 +89,7 @@ module BitcoinPredictionMarket {
 
     public fun start_new_round(operator: &signer) acquires PredictionMarket {
         let operator_addr = signer::address_of(operator);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
+        let market = borrow_global_mut<PredictionMarket>(@forecaster);
         
         assert!(operator_addr == market.operator, ERROR_NOT_OPERATOR);
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
@@ -122,7 +121,7 @@ module BitcoinPredictionMarket {
 
     public fun resolve_round(operator: &signer) acquires PredictionMarket {
         let operator_addr = signer::address_of(operator);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
+        let market = borrow_global_mut<PredictionMarket>(@forecaster);
         
         assert!(operator_addr == market.operator, ERROR_NOT_OPERATOR);
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
@@ -159,17 +158,17 @@ module BitcoinPredictionMarket {
         start_new_round(operator);
     }
 
-    public fun bet_bull(user: &signer, amount: Coin<AptosCoin>) acquires PredictionMarket, UserBets {
-        bet_internal(user, amount, true)
+    public fun bet_bull(user: &signer, amount: u64) acquires PredictionMarket, UserBets {
+        bet_internal(user, coin::withdraw<AptosCoin>(user, amount), true)
     }
 
-    public fun bet_bear(user: &signer, amount: Coin<AptosCoin>) acquires PredictionMarket, UserBets {
-        bet_internal(user, amount, false)
+    public fun bet_bear(user: &signer, amount: u64) acquires PredictionMarket, UserBets {
+        bet_internal(user, coin::withdraw<AptosCoin>(user, amount), false)
     }
 
     fun bet_internal(user: &signer, amount: Coin<AptosCoin>, is_bull: bool) acquires PredictionMarket, UserBets {
         let user_addr = signer::address_of(user);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
+        let market = borrow_global_mut<PredictionMarket>(@forecaster);
         
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
         let current_round = vector::borrow_mut(&mut market.rounds, market.current_epoch - 1);
@@ -198,12 +197,12 @@ module BitcoinPredictionMarket {
         });
 
         // Transfer the bet amount to the contract
-        coin::deposit(signer::address_of(admin), amount);
+        coin::deposit(@forecaster, amount);
     }
 
     public fun claim(user: &signer, epoch: u64) acquires PredictionMarket, UserBets {
         let user_addr = signer::address_of(user);
-        let market = borrow_global<PredictionMarket>(signer::address_of(admin));
+        let market = borrow_global<PredictionMarket>(@forecaster);
         
         assert!(epoch < market.current_epoch, ERROR_ROUND_NOT_ENDED);
         let round = vector::borrow(&market.rounds, epoch - 1);
@@ -224,96 +223,73 @@ module BitcoinPredictionMarket {
         };
 
         user_bet.claimed = true;
-
         if (reward_amount > 0) {
-            let reward_coins = coin::withdraw<AptosCoin>(&market.admin, reward_amount);
-            coin::deposit(user_addr, reward_coins);
+            coin::transfer<AptosCoin>(@forecaster, user_addr, reward_amount);
         };
     }
 
-    public fun claim_treasury(admin: &signer) acquires PredictionMarket {
-        let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
-        
-        assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
-
-        let amount = market.treasury_amount;
-        market.treasury_amount = 0;
-
-        let treasury_coins = coin::withdraw<AptosCoin>(&market.admin, amount);
-        coin::deposit(admin_addr, treasury_coins);
+    fun find_user_bet(bets: &mut vector<UserBet>, epoch: u64): Option<UserBet> {
+        let length = vector::length(bets);
+        let i = 0;
+        while (i < length) {
+            let bet = vector::borrow(bets, i);
+            if (bet.epoch == epoch) {
+                return option::some(*bet);
+            };
+            i = i + 1;
+        };
+        option::none()
     }
 
-    public fun pause(admin: &signer) acquires PredictionMarket {
+   /*public fun get_bitcoin_price(): u64 {
+    let btc_price_id = price_identifier::from_byte_vec(PYTH_BTC_PRICE_FEED_ID);
+    let price_feed = pyth::get_price_feed_from_price_identifier(btc_price_id);
+    let current_price = pyth::get_price(price_feed);
+    let price_value = price::get_price(&current_price);
+    let expo = price::get_expo(&current_price);
+
+    // Adjust the price based on the exponent value
+    if (expo < 0) {
+        let abs_expo = u64::from(0 - expo);
+        price_value / (10u64 ** abs_expo)
+    } else {
+        price_value * (10u64 ** (expo as u64))
+    }
+}*/
+public fun get_bitcoin_price(user: &signer, pyth_price_update: vector<vector<u8>>): Price {
+ 
+        // First update the Pyth price feeds
+        let coins = coin::withdraw(user, pyth::get_update_fee(&pyth_price_update));
+        pyth::update_price_feeds(pyth_price_update, coins);
+ 
+        // Read the current price from a price feed.
+        // Each price feed (e.g., BTC/USD) is identified by a price feed ID.
+        // The complete list of feed IDs is available at https://pyth.network/developers/price-feed-ids
+        // Note: Aptos uses the Pyth price feed ID without the `0x` prefix.
+        let btc_price_identifier = x"e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
+        let btc_usd_price_id = price_identifier::from_byte_vec(btc_price_identifier);
+        pyth::get_price(btc_usd_price_id)
+    }
+
+
+
+
+    fun is_round_bettable(round: &Round): bool {
+        let current_time = timestamp::now_seconds();
+        !round.resolved && current_time >= round.start_timestamp && current_time < round.end_timestamp
+    }
+
+    public fun pause_market(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
-        
+        let market = borrow_global_mut<PredictionMarket>(@forecaster);
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
         market.paused = true;
     }
 
-    public fun unpause(admin: &signer) acquires PredictionMarket {
+    public fun unpause_market(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
-        
+        let market = borrow_global_mut<PredictionMarket>(@forecaster);
         assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
         market.paused = false;
-    }
-
-    public fun set_treasury_fee(admin: &signer, fee: u64) acquires PredictionMarket {
-        let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
-        
-        assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
-        assert!(fee <= MAX_TREASURY_FEE, ERROR_INVALID_EPOCH);
-        market.treasury_fee = fee;
-    }
-
-    public fun set_operator(admin: &signer, new_operator: address) acquires PredictionMarket {
-        let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
-        
-        assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
-        market.operator = new_operator;
-    }
-
-    fun is_round_bettable(round: &Round): bool {
-        let current_timestamp = timestamp::now_seconds();
-        current_timestamp > round.start_timestamp && current_timestamp < round.end_timestamp
-    }
-
-    fun find_user_bet(bets: &mut vector<UserBet>, epoch: u64): Option<UserBet> {
-        let i = 0;
-        let len = vector::length(bets);
-        while (i < len) {
-            let bet = vector::borrow(bets, i);
-            if (bet.epoch == epoch) {
-                return option::some(*bet)
-            };
-            i = i + 1;
-        };
-        option::none<UserBet>()
-    }
-
-    fun get_bitcoin_price(): u64 {
-        let price_feed_id = price_identifier::from_byte_vec(PYTH_BTC_PRICE_FEED_ID);
-        let price_feed = price_feed::get_price_feed_from_price_identifier(price_feed_id);
-        let current_price = price_feed::get_price(&price_feed);
-        
-        // Convert price to u64 and adjust for decimals
-        let price_value = i64::get_magnitude_if_positive(&current_price.price);
-        let conf = i64::get_magnitude_if_positive(&current_price.conf);
-        let expo = i64::get_magnitude_if_negative(&current_price.expo);
-        
-        // Adjust price to USD with 2 decimal places (cents)
-        // Pyth gives price in 8 decimal places, so we divide by 1_000_000 to get to cents
-       u64::from(price_value / 1_000_000)
-
-    }
-
-    public fun transfer_admin_role(admin: &signer, new_admin: address) acquires PredictionMarket {
-        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
-        assert!(signer::address_of(admin) == market.admin, ERROR_NOT_ADMIN);
-        market.admin = new_admin;
     }
 }

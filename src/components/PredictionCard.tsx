@@ -6,30 +6,39 @@ import { ArrowUp } from 'lucide-react';
 import { ArrowLeft } from 'lucide-react';
 import Confetti from 'react-confetti';
 
+// Define the interface for the props
+interface PredictionCardProps {
+    timer: number;
+    isTimerActive: boolean;
+    secondTimer: number;
+    isSecondTimerActive: boolean;
+    resetTimers: () => void;
+  }
 
-const PredictionCard = ({ timer, secondTimer, isSecondTimerActive, resetTimers })  => {
+
+const PredictionCard: React.FC<PredictionCardProps> = ({ timer, secondTimer, isSecondTimerActive, resetTimers })  => {
   // Manage state for user choice and form progression
   const [step, setStep] = useState(1); // Initial step (choose UP/DOWN)
-  const [prediction, setPrediction] = useState(null); // Track whether UP or DOWN is selected
+  const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null); // Track whether UP or DOWN is selected
   const [betAmount, setBetAmount] = useState(''); // Track bet amount
   const [isConnected, setIsConnected] = useState(false); 
   const [isPredictionConfirmed, setIsPredictionConfirmed] = useState(false); // Track if the user confirmed their prediction
-  const [hasWon, setHasWon] = useState(null); // Track if the user won
+  const [hasWon, setHasWon] = useState<boolean | null>(null); // Track if the user won
 
 
 
   // Handle the button click for UP/DOWN prediction
-  const handlePrediction = (choice) => {
+const handlePrediction = (choice: 'UP' | 'DOWN') => {
     // Disable predictions if the timer is over or secondTimer is active
     if (timer === 0 || isSecondTimerActive) {
         return; // Do nothing if timer is over or secondTimer has started
-      }
+    }
     setPrediction(choice); // Set user choice to UP or DOWN
     setStep(2); // Move to the next step (bet amount + connect wallet)
-  };
+};
 
   // Handle the bet amount input change
-  const handleAmountChange = (e) => {
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBetAmount(e.target.value); // Set bet amount
   };
 
@@ -187,7 +196,7 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive, resetTimers }
                         <Confetti width={window.innerWidth} height={window.innerHeight} />
                         <div className='flex flex-col justify-center w-full p-4 items-center gap-6 h-full'>
                             <img src="images/Trophy 1.png" alt="Win Image Trophy" />
-                            <h1 className='text-3xl'>Congrats!</h1>
+                            <h1 className='text-3xl text-center'>Congrats!</h1>
                             <div className='flex flex-col gap-2 items-center justify-center'>
                                 <p>You have won:</p>
                                 <div className='flex items-center gap-2'> <img src="images/aptos logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
@@ -197,9 +206,12 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive, resetTimers }
 
                     </div>
                     ) : (
-                    <div className='lose-structure flex flex-col justify-center items-center gap-6'>
-                        <h1 className='text-3xl'>You have lost.</h1>
-                        <p>Better luck next time!</p>
+                    <div className='lose-structure flex flex-col justify-between p-4 pb-6 h-full items-center'>
+                        <div className='flex flex-col gap-6 items-center justify-center w-full p-4 h-full'>
+                            <h1 className='text-3xl text-center'>You have lost.</h1>
+                            <p>Better luck next time!</p>
+                        </div>
+                        <button onClick={resetPrediction} className='connect-button-hover bg-button text-white px-4 py-2 rounded w-full rounded-xl'>Back</button>
                     </div>
                     )}
                 </div>

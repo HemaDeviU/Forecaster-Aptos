@@ -7,7 +7,7 @@ const Chart = () => {
   useEffect(() => {
     // Check if the widget script already exists to avoid duplication
     const existingScript = document.getElementById('tradingview-widget-script');
-    
+
     if (!existingScript) {
       const script = document.createElement('script');
       script.id = 'tradingview-widget-script'; // Set an ID to check later
@@ -25,7 +25,16 @@ const Chart = () => {
         calendar: false,
         support_host: "https://www.tradingview.com",
       });
-      document.querySelector('.tradingview-widget-container__widget').appendChild(script);
+
+      // Select the widget container
+      const widgetContainer = document.querySelector('.tradingview-widget-container__widget');
+
+      // Check if the widget container exists before appending the script
+      if (widgetContainer) {
+        widgetContainer.appendChild(script);
+      } else {
+        console.warn('Widget container not found');
+      }
     }
   }, []);
 

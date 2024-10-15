@@ -21,7 +21,7 @@ const PredictionCard: React.FC<PredictionCardProps> = ({ timer, secondTimer, isS
   const [step, setStep] = useState(1); // Initial step (choose UP/DOWN)
   const [prediction, setPrediction] = useState<'UP' | 'DOWN' | null>(null); // Track whether UP or DOWN is selected
   const [betAmount, setBetAmount] = useState(''); // Track bet amount
-  const [isConnected, setIsConnected] = useState(false); 
+//   const [isConnected, setIsConnected] = useState(false); 
   const [isPredictionConfirmed, setIsPredictionConfirmed] = useState(false); // Track if the user confirmed their prediction
   const [hasWon, setHasWon] = useState<boolean | null>(null); // Track if the user won
 
@@ -42,10 +42,10 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
     setBetAmount(e.target.value); // Set bet amount
   };
 
-  // Simulate wallet connection
-  const handleConnect = () => {
-    setIsConnected(true); // Simulate wallet being connected
-  };
+//   // Simulate wallet connection
+//   const handleConnect = () => {
+//     setIsConnected(true); // Simulate wallet being connected
+//   };
 
   // Simulate an Upward prediction result when secondTimer starts
   useEffect(() => {
@@ -199,10 +199,10 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
                             <h1 className='text-3xl text-center'>Congrats!</h1>
                             <div className='flex flex-col gap-2 items-center justify-center'>
                                 <p>You have won:</p>
-                                <div className='flex items-center gap-2'> <img src="images/aptos_logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
+                                <div className='flex items-center gap-2'> <img src="images/aptos logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
                             </div>
                         </div>
-                        <button onClick={resetPrediction} className='connect-button-hover bg-button text-white px-4 py-2 rounded w-full rounded-xl'>Back</button>
+                        <button onClick={resetPrediction} className='connect-button-hover bg-button text-white px-4 py-2 rounded w-full rounded-xl'>Claim</button>
 
                     </div>
                     ) : (
@@ -251,7 +251,7 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
                             <label>
                                 Commit:
                             </label> 
-                            <div className='flex items-center gap-2'> <img src="images/aptos_logo.png" alt="aptos logo" className='aptos-img' /> <p>APT</p></div>
+                            <div className='flex items-center gap-2'> <img src="images/aptos logo.png" alt="aptos logo" className='aptos-img' /> <p>APT</p></div>
                         </div>
                         <Input
                             type="number"
@@ -260,17 +260,13 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
                             placeholder="0.0"
                             className="placeholder:text-gray-400 rounded-xl"
                         />
-                    </div>           
+                    </div>
                     <button onClick={() => {
-                                    if (isConnected) {
                                     setStep(1); // Advance to step 3 if the wallet is already connected
-                                    } else {
-                                    handleConnect(); // Connect the wallet first
-                                    }
                                     setIsPredictionConfirmed(true)
                                 }}
                             className="connect-wallet-button connect-button-hover bg-button text-white px-4 py-2 rounded mt-4 w-full rounded-xl">
-                        {isConnected ? 'Confirm' : 'Connect Wallet'}
+                        Confirm
                     </button>
                 </div>
                 

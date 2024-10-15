@@ -186,6 +186,7 @@ const PredictionCard = ({ timer, secondTimer, isSecondTimerActive, resetTimers }
                     <div className='win-structure flex flex-col justify-between w-full p-4 pb-6 items-center h-full'>
                         <Confetti width={window.innerWidth} height={window.innerHeight} />
                         <div className='flex flex-col justify-center w-full p-4 items-center gap-6 h-full'>
+                            <img src="images/Trophy 1.png" alt="Win Image Trophy" />
                             <h1 className='text-3xl'>Congrats!</h1>
                             <div className='flex flex-col gap-2 items-center justify-center'>
                                 <p>You have won:</p>

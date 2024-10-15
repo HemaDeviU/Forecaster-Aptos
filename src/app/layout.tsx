@@ -22,7 +22,7 @@ export default function RootLayout({
       >
         <div className='mobile-container'>
           <Navbar />
-          <div className="h-full p-8 items-center flex flex-col justify-center">
+          <div className="h-full py-5 items-center flex flex-col justify-center" style={{ transform: 'scale(0.98)'}}>
             {children}
           </div>
           <BottomMenu />

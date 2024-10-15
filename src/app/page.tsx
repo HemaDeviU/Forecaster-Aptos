@@ -6,9 +6,9 @@ import PredictionCard from "@/components/PredictionCard";
 
 const Home = () => {
   // Timer state
-  const [timer, setTimer] = useState(5);
+  const [timer, setTimer] = useState(20);
   const [isTimerActive, setIsTimerActive] = useState(true);
-  const [secondTimer, setSecondTimer] = useState(5); // New timer state
+  const [secondTimer, setSecondTimer] = useState(20); // New timer state
   const [isSecondTimerActive, setIsSecondTimerActive] = useState(false); // State for second timer
 
 
@@ -22,7 +22,7 @@ const Home = () => {
       }, 1000);
     } else if (timer === 0) {
       setIsTimerActive(false); // Stop the timer
-      setSecondTimer(5); // Reset second timer to 5 seconds
+      setSecondTimer(20); // Reset second timer to 5 seconds
       setIsSecondTimerActive(true); // Start second timer
     }
 

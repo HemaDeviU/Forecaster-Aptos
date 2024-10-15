@@ -7,7 +7,12 @@ module BitcoinPredictionMarket {
     use std::vector;
     use std::option::{Self, Option};
 
+    use pyth::price_identifier;
+    use pyth::price_feed;
+    use pyth::i64;
+
     /// Errors
+    const ROUND_DURATION: u64 = 300; // 5 minutes in seconds
     const ERROR_NOT_INITIALIZED: u64 = 1;
     const ERROR_NOT_ADMIN: u64 = 2;
     const ERROR_NOT_OPERATOR: u64 = 3;
@@ -23,38 +28,34 @@ module BitcoinPredictionMarket {
 
     /// Constants
     const MAX_TREASURY_FEE: u64 = 1000; // 10%
+    const PYTH_BTC_PRICE_FEED_ID: vector<u8> = x"0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43";
 
-    /// Main struct to hold the prediction market state
     struct PredictionMarket has key {
         admin: address,
         operator: address,
         oracle: address,
         current_epoch: u64,
-        interval_seconds: u64,
-        min_bet_amount: u64,
         treasury_fee: u64,
         treasury_amount: u64,
         rounds: vector<Round>,
         paused: bool,
+        last_round_time: u64,
     }
 
-    /// Struct to represent a single round
     struct Round has store {
         epoch: u64,
         start_timestamp: u64,
-        lock_timestamp: u64,
-        close_timestamp: u64,
-        lock_price: u64,
-        close_price: u64,
+        end_timestamp: u64,
+        start_price: u64,
+        end_price: u64,
         total_amount: u64,
         bull_amount: u64,
         bear_amount: u64,
         reward_amount: u64,
         reward_base_cal_amount: u64,
-        oracle_called: bool,
+        resolved: bool,
     }
 
-    /// Struct to represent a user's bet
     struct UserBet has store, drop {
         epoch: u64,
         position: bool, // true for Bull, false for Bear
@@ -62,13 +63,11 @@ module BitcoinPredictionMarket {
         claimed: bool,
     }
 
-    /// Resource to store a user's bets
     struct UserBets has key {
         bets: vector<UserBet>,
     }
 
-    /// Initialize the prediction market
-    public fun initialize(admin: &signer, operator: address, oracle: address, interval_seconds: u64, min_bet_amount: u64, treasury_fee: u64) {
+    public fun initialize(admin: &signer, operator: address, oracle: address, treasury_fee: u64) {
         let admin_addr = signer::address_of(admin);
         assert!(!exists<PredictionMarket>(admin_addr), ERROR_ALREADY_INITIALIZED);
         assert!(treasury_fee <= MAX_TREASURY_FEE, ERROR_INVALID_EPOCH);
@@ -78,17 +77,18 @@ module BitcoinPredictionMarket {
             operator,
             oracle,
             current_epoch: 0,
-            interval_seconds,
-            min_bet_amount,
             treasury_fee,
             treasury_amount: 0,
             rounds: vector::empty(),
             paused: false,
+            last_round_time: 0,
         });
+
+        // Start the first round
+        start_new_round(admin);
     }
 
-    /// Start a new round
-    public fun start_round(operator: &signer) acquires PredictionMarket {
+    public fun start_new_round(operator: &signer) acquires PredictionMarket {
         let operator_addr = signer::address_of(operator);
         let market = borrow_global_mut<PredictionMarket>(@admin);
         
@@ -96,86 +96,77 @@ module BitcoinPredictionMarket {
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
 
         let current_timestamp = timestamp::now_seconds();
+        assert!(current_timestamp >= market.last_round_time + ROUND_DURATION, ERROR_ROUND_NOT_ENDED);
+
         let new_epoch = market.current_epoch + 1;
+        let current_price = get_bitcoin_price();
 
         let new_round = Round {
             epoch: new_epoch,
             start_timestamp: current_timestamp,
-            lock_timestamp: current_timestamp + market.interval_seconds,
-            close_timestamp: current_timestamp + (2 * market.interval_seconds),
-            lock_price: 0,
-            close_price: 0,
+            end_timestamp: current_timestamp + ROUND_DURATION,
+            start_price: current_price,
+            end_price: 0,
             total_amount: 0,
             bull_amount: 0,
             bear_amount: 0,
             reward_amount: 0,
             reward_base_cal_amount: 0,
-            oracle_called: false,
+            resolved: false,
         };
 
         vector::push_back(&mut market.rounds, new_round);
         market.current_epoch = new_epoch;
+        market.last_round_time = current_timestamp;
     }
 
-    /// Lock the current round
-    public fun lock_round(operator: &signer, price: u64) acquires PredictionMarket {
+    public fun resolve_round(operator: &signer) acquires PredictionMarket {
         let operator_addr = signer::address_of(operator);
         let market = borrow_global_mut<PredictionMarket>(@admin);
         
         assert!(operator_addr == market.operator, ERROR_NOT_OPERATOR);
         assert!(!market.paused, ERROR_NOT_INITIALIZED);
 
+        let current_timestamp = timestamp::now_seconds();
         let current_round = vector::borrow_mut(&mut market.rounds, market.current_epoch - 1);
-        assert!(timestamp::now_seconds() >= current_round.lock_timestamp, ERROR_ROUND_NOT_ENDED);
-        assert!(timestamp::now_seconds() < current_round.close_timestamp, ERROR_ROUND_ENDED);
-
-        current_round.lock_price = price;
-    }
-
-    /// End the previous round and calculate rewards
-    public fun end_round(operator: &signer, price: u64) acquires PredictionMarket {
-        let operator_addr = signer::address_of(operator);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
         
-        assert!(operator_addr == market.operator, ERROR_NOT_OPERATOR);
-        assert!(!market.paused, ERROR_NOT_INITIALIZED);
+        assert!(current_timestamp >= current_round.end_timestamp, ERROR_ROUND_NOT_ENDED);
+        assert!(!current_round.resolved, ERROR_ROUND_ENDED);
 
-        let previous_round = vector::borrow_mut(&mut market.rounds, market.current_epoch - 2);
-        assert!(timestamp::now_seconds() >= previous_round.close_timestamp, ERROR_ROUND_NOT_ENDED);
-
-        previous_round.close_price = price;
-        previous_round.oracle_called = true;
+        let end_price = get_bitcoin_price();
+        current_round.end_price = end_price;
+        current_round.resolved = true;
 
         // Calculate rewards
-        let reward_amount = if (previous_round.close_price > previous_round.lock_price) {
+        let reward_amount = if (end_price > current_round.start_price) {
             // Bull wins
-            previous_round.reward_base_cal_amount = previous_round.bull_amount;
-            previous_round.total_amount - (previous_round.total_amount * market.treasury_fee / 10000)
-        } else if (previous_round.close_price < previous_round.lock_price) {
+            current_round.reward_base_cal_amount = current_round.bull_amount;
+            current_round.total_amount - (current_round.total_amount * market.treasury_fee / 10000)
+        } else if (end_price < current_round.start_price) {
             // Bear wins
-            previous_round.reward_base_cal_amount = previous_round.bear_amount;
-            previous_round.total_amount - (previous_round.total_amount * market.treasury_fee / 10000)
+            current_round.reward_base_cal_amount = current_round.bear_amount;
+            current_round.total_amount - (current_round.total_amount * market.treasury_fee / 10000)
         } else {
             // House wins
-            previous_round.reward_base_cal_amount = 0;
+            current_round.reward_base_cal_amount = 0;
             0
         };
 
-        previous_round.reward_amount = reward_amount;
-        market.treasury_amount = market.treasury_amount + (previous_round.total_amount - reward_amount);
+        current_round.reward_amount = reward_amount;
+        market.treasury_amount = market.treasury_amount + (current_round.total_amount - reward_amount);
+
+        // Start a new round
+        start_new_round(operator);
     }
 
-    /// Place a bull bet
     public fun bet_bull(user: &signer, amount: Coin<AptosCoin>) acquires PredictionMarket, UserBets {
         bet_internal(user, amount, true)
     }
 
-    /// Place a bear bet
     public fun bet_bear(user: &signer, amount: Coin<AptosCoin>) acquires PredictionMarket, UserBets {
         bet_internal(user, amount, false)
     }
 
-    /// Internal function to handle betting
     fun bet_internal(user: &signer, amount: Coin<AptosCoin>, is_bull: bool) acquires PredictionMarket, UserBets {
         let user_addr = signer::address_of(user);
         let market = borrow_global_mut<PredictionMarket>(@admin);
@@ -184,7 +175,6 @@ module BitcoinPredictionMarket {
         let current_round = vector::borrow_mut(&mut market.rounds, market.current_epoch - 1);
         
         assert!(is_round_bettable(current_round), ERROR_ROUND_NOT_BETTABLE);
-        assert!(coin::value(&amount) >= market.min_bet_amount, ERROR_INSUFFICIENT_BET);
 
         // Update round data
         let bet_amount = coin::value(&amount);
@@ -211,14 +201,13 @@ module BitcoinPredictionMarket {
         coin::deposit(@admin, amount);
     }
 
-    /// Claim rewards for a specific epoch
     public fun claim(user: &signer, epoch: u64) acquires PredictionMarket, UserBets {
         let user_addr = signer::address_of(user);
         let market = borrow_global<PredictionMarket>(@admin);
         
-        assert!(epoch < market.current_epoch - 1, ERROR_ROUND_NOT_ENDED);
+        assert!(epoch < market.current_epoch, ERROR_ROUND_NOT_ENDED);
         let round = vector::borrow(&market.rounds, epoch - 1);
-        assert!(round.oracle_called, ERROR_ROUND_NOT_ENDED);
+        assert!(round.resolved, ERROR_ROUND_NOT_ENDED);
 
         let user_bets = borrow_global_mut<UserBets>(user_addr);
         let user_bet_opt = find_user_bet(&mut user_bets.bets, epoch);
@@ -227,8 +216,8 @@ module BitcoinPredictionMarket {
         let user_bet = option::borrow_mut(&mut user_bet_opt);
         assert!(!user_bet.claimed, ERROR_ALREADY_CLAIMED);
 
-        let reward_amount = if ((round.close_price > round.lock_price && user_bet.position) ||
-                                (round.close_price < round.lock_price && !user_bet.position)) {
+        let reward_amount = if ((round.end_price > round.start_price && user_bet.position) ||
+                                (round.end_price < round.start_price && !user_bet.position)) {
             (user_bet.amount * round.reward_amount) / round.reward_base_cal_amount
         } else {
             0
@@ -242,7 +231,6 @@ module BitcoinPredictionMarket {
         };
     }
 
-    /// Claim treasury
     public fun claim_treasury(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
         let market = borrow_global_mut<PredictionMarket>(@admin);
@@ -256,7 +244,6 @@ module BitcoinPredictionMarket {
         coin::deposit(admin_addr, treasury_coins);
     }
 
-    /// Pause the contract
     public fun pause(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
         let market = borrow_global_mut<PredictionMarket>(@admin);
@@ -265,7 +252,6 @@ module BitcoinPredictionMarket {
         market.paused = true;
     }
 
-    /// Unpause the contract
     public fun unpause(admin: &signer) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
         let market = borrow_global_mut<PredictionMarket>(@admin);
@@ -274,16 +260,6 @@ module BitcoinPredictionMarket {
         market.paused = false;
     }
 
-    /// Set minimum bet amount
-    public fun set_min_bet_amount(admin: &signer, amount: u64) acquires PredictionMarket {
-        let admin_addr = signer::address_of(admin);
-        let market = borrow_global_mut<PredictionMarket>(@admin);
-        
-        assert!(admin_addr == market.admin, ERROR_NOT_ADMIN);
-        market.min_bet_amount = amount;
-    }
-
-    /// Set treasury fee
     public fun set_treasury_fee(admin: &signer, fee: u64) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
         let market = borrow_global_mut<PredictionMarket>(@admin);
@@ -293,7 +269,6 @@ module BitcoinPredictionMarket {
         market.treasury_fee = fee;
     }
 
-    /// Set operator
     public fun set_operator(admin: &signer, new_operator: address) acquires PredictionMarket {
         let admin_addr = signer::address_of(admin);
         let market = borrow_global_mut<PredictionMarket>(@admin);
@@ -302,13 +277,11 @@ module BitcoinPredictionMarket {
         market.operator = new_operator;
     }
 
-    /// Helper function to check if a round is bettable
     fun is_round_bettable(round: &Round): bool {
         let current_timestamp = timestamp::now_seconds();
-        current_timestamp > round.start_timestamp && current_timestamp < round.lock_timestamp
+        current_timestamp > round.start_timestamp && current_timestamp < round.end_timestamp
     }
 
-    /// Helper function to find a user's bet for a specific epoch
     fun find_user_bet(bets: &mut vector<UserBet>, epoch: u64): Option<UserBet> {
         let i = 0;
         let len = vector::length(bets);
@@ -322,5 +295,24 @@ module BitcoinPredictionMarket {
         option::none<UserBet>()
     }
 
-    // Add any additional helper functions or public views as needed
+    fun get_bitcoin_price(): u64 {
+        let price_feed_id = price_identifier::from_byte_vec(PYTH_BTC_PRICE_FEED_ID);
+        let price_feed = price_feed::get_price_feed_from_price_identifier(price_feed_id);
+        let current_price = price_feed::get_price(&price_feed);
+        
+        // Convert price to u64 and adjust for decimals
+        let price_value = i64::get_magnitude_if_positive(&current_price.price);
+        let conf = i64::get_magnitude_if_positive(&current_price.conf);
+        let expo = i64::get_magnitude_if_negative(&current_price.expo);
+        
+        // Adjust price to USD with 2 decimal places (cents)
+        // Pyth gives price in 8 decimal places, so we divide by 1_000_000 to get to cents
+        (price_value / 1_000_000) as u64
+    }
+
+    public fun transfer_admin_role(admin: &signer, new_admin: address) acquires PredictionMarket {
+        let market = borrow_global_mut<PredictionMarket>(signer::address_of(admin));
+        assert!(signer::address_of(admin) == market.admin, ERROR_NOT_ADMIN);
+        market.admin = new_admin;
+    }
 }

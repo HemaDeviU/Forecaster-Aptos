@@ -22,7 +22,7 @@ Deployed on : [Aptos Testnet](https://explorer.aptoslabs.com/account/0x2a12be72e
 ![App Screens](./images/Screens.png)
 
 ## User Guide
-- Create a [Petra Wallet](https://petra.app).
+- Create a [Martian Wallet](https://martianwallet.xyz/aptos-wallet/).
 - Fund your wallet with [APT](https://developers.moralis.com/faucets/utm_source=blog&utm_medium=post&utm_campaign=Aptos%2520Testnet%2520Faucet%2520%25E2%2580%2593%2520How%2520to%2520Get%2520Testnet%2520APT%2520from%2520an%2520Aptos%2520Faucet).
 - Visit [Forecaster](https://forecaster-aptos.vercel.app).
 - Click on Connect Wallet.
@@ -63,6 +63,9 @@ Forecaster is designed in a way such that there is always something to bet on. T
 - **Scalability**: The architecture is designed to accommodate an increasing number of users and transactions as demand grows.The future plans to implement referral based NFTs that unlock super powers to increase the user base is out go-to-market strategy.
 - **Community Engagement**: Plans for community-driven features such as governance tokens or rewards for active participants can enhance user loyalty and platform adoption.
 - **Expansion Opportunities**: Plans to launch the dapp natively multi-lingual to boost user participation.
+
+![youtube](
+https://www.youtube.com/watch?v=wczvAAFechk&ab_channel=Sgherro12)
 
 ### The Team
 - **Stefano**: Design & Front end Developer

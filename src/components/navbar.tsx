@@ -1,6 +1,6 @@
 "use client";
 
-
+import WalletButton from '../components/walletButton'; // Adjust the path based on your folder structure
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -25,12 +25,13 @@ const Navbar = () => {
 
         {/* Connect Button */}
         <div>
-          <button onClick={() => {
+          {/* <button onClick={() => {
                                     handleConnect(); // Connect the wallet first
                                 }}className="connect-button-hover rounded-full border-4 bg-button text-white px-4 py-1.5 rounded text-lg" style={{ borderColor: '#4D147C' }}
           >
             {isConnected ? 'Connected' : 'Connect'}
-          </button>
+          </button> */}
+          <WalletButton/>
         </div>
       </div>
     </nav>

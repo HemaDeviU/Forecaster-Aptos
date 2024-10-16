@@ -195,11 +195,11 @@ const handlePrediction = (choice: 'UP' | 'DOWN') => {
                     <div className='win-structure flex flex-col justify-between w-full p-4 pb-6 items-center h-full'>
                         <Confetti width={window.innerWidth} height={window.innerHeight} />
                         <div className='flex flex-col justify-center w-full p-4 items-center gap-6 h-full'>
-                            <img src="images/Trophy 1.png" alt="Win Image Trophy" />
+                            <img src="images/Trophy 1.png" alt="Win Image Trophy" className='win-img'/>
                             <h1 className='text-3xl text-center'>Congrats!</h1>
                             <div className='flex flex-col gap-2 items-center justify-center'>
                                 <p>You have won:</p>
-                                <div className='flex items-center gap-2'> <img src="images/aptos_logo.png" alt="aptos logo" className='aptos-img' /> <p>8.3 APT</p></div>
+                                <div className='flex items-center gap-2'> <img src="images/aptos_logo.png" alt="aptos logo" className='aptos-img' /> <p>1.5 APT</p></div>
                             </div>
                         </div>
                         <button onClick={resetPrediction} className='connect-button-hover bg-button text-white px-4 py-2 rounded w-full rounded-xl'>Claim</button>

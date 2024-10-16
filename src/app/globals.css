@@ -147,7 +147,31 @@ body {
 .pool-img {
   width: 180px;
   height: auto;
+  filter: drop-shadow(0 0 30px rgba(255, 255, 160, 0.5)); /* Outer glow effect */
 }
+.win-img {
+  filter: drop-shadow(0 0 30px rgba(255, 255, 143, 0.5)); /* Outer glow effect */
+}
+
+/* styles.css or your main CSS file */
+.win-img {
+  height: auto; /* Maintain aspect ratio */
+  animation: scale-in 0.5s ease-in-out forwards; /* Animation applied to the trophy image */
+}
+
+@keyframes scale-in {
+  from {
+      transform: scale(0); /* Start at 0% size */
+      opacity: 0; /* Start hidden */
+  }
+  to {
+      transform: scale(1); /* Scale to 100% size */
+      opacity: 1; /* Fully visible */
+  }
+}
+
+
+
 .aptos-img {width: 26px; height: auto;}
 .prediction-step, .bet-step {border-radius: 30px;}
 

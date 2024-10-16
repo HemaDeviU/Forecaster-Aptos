@@ -64,8 +64,7 @@ Forecaster is designed in a way such that there is always something to bet on. T
 - **Community Engagement**: Plans for community-driven features such as governance tokens or rewards for active participants can enhance user loyalty and platform adoption.
 - **Expansion Opportunities**: Plans to launch the dapp natively multi-lingual to boost user participation.
 
-![youtube](
-https://www.youtube.com/watch?v=wczvAAFechk&ab_channel=Sgherro12)
+![youtube](https://www.youtube.com/watch?v=wczvAAFechk&ab_channel=Sgherro12)
 
 ### The Team
 - **Stefano**: Design & Front end Developer

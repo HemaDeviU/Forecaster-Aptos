@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 
 const WalletButton: React.FC = () => {
   const [account, setAccount] = useState<string | null>(null);

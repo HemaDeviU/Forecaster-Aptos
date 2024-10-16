@@ -6,14 +6,7 @@ import { useState } from 'react';
 
 const Navbar = () => {
 
-  const [isConnected, setIsConnected] = useState(false); 
-
-
-   // Simulate wallet connection
-   const handleConnect = () => {
-    setIsConnected(true); // Simulate wallet being connected
-  };
-
+ 
 
   return (
     <nav className="px-4 py-2 border-b-2" style={{ borderColor: '#1F2295' }}>
